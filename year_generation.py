@@ -8,7 +8,7 @@ def calculate_daily_radiation(data):
     data['Time'] = pd.to_datetime(data['Time'], errors='coerce')
     data.dropna(subset=['Time'], inplace=True)
     data['Date'] = data['Time'].dt.date
-    return data.groupby('Date')['Radiation (kWh/m²)'].sum()
+    return data.groupby('Date')['Radiation (kWh/m²)'].sum()/764
 
 
 def estimate_monthly_radiation(daily_radiation, days_in_month):
