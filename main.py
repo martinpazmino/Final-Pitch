@@ -28,8 +28,8 @@ data['Month'] = data['Time'].dt.month  # Extract month
 data['State'] = data['Occupancy Level (%)'].apply(lambda x: 'Expanded (135 m²)' if x > 50 else 'Contracted (65 m²)')
 
 # Constants
-motor_energy_per_cycle = 160  # kWh per movement cycle
-num_cycles = 40  # Total number of movements per year
+motor_energy_per_cycle = 6.5 # kWh per movement cycle
+num_cycles = 90  # Total number of movements per year
 pannel_area= 64
 
 
@@ -133,14 +133,15 @@ app = Dash(__name__)
 
 # Define the layout
 app.layout = html.Div([
-    html.H1("Energy Dashboard", style={'textAlign': 'center'}),
+    html.H1("Energy Dashboard", style={'textAlign': 'center','marginBottom': '30px'}),
 
     # Adjusted Energy Demand Section
     html.Div([
-        html.H1("Energy Demand vs Adjusted Energy Demand", style={'textAlign': 'center'}),
+        html.H1("Energy Demand vs Adjusted Energy Demand", style={'textAlign': 'center','marginBottom': '20px'}),
 
         # Line chart
         html.Div([
+            html.H2("Energy Demand vs Adjusted Energy Demand", style={'textAlign': 'center', 'marginBottom': '20px'}),
             dcc.Graph(
                 id='energy-demand-comparison',
                 figure={
@@ -150,7 +151,7 @@ app.layout = html.Div([
                             y=data1['Energy Demand (kWh)'],
                             mode='lines+markers',
                             name='Energy Demand',
-                            line=dict(color='#4ecdc4')  # Match theme color
+                            line=dict(color='#4ecdc4')
                         ),
                         go.Scatter(
                             x=data1['Date'],
@@ -161,116 +162,67 @@ app.layout = html.Div([
                         )
                     ],
                     'layout': go.Layout(
-                        title="Energy Demand vs Adjusted Energy Demand",
-                        xaxis={'title': "Date"},
-                        yaxis={'title': "Energy (kWh)"},
-                        legend={'x': 0, 'y': 1},
-                        hovermode='closest',
-                        font=dict(color='#2c3e50'),  # Consistent font color
-                        margin=dict(t=30, b=20, l=20, r=20)  # Consistent margins
+                        xaxis={'title': "Date", 'automargin': True},
+                        yaxis={'title': "Energy (kWh)", 'automargin': True},
+                        legend={
+                            'x': 0.01, 'y': 0.99, 'bgcolor': 'rgba(255,255,255,0.7)', 'bordercolor': '#ccc', 'borderwidth': 1
+                        },
+                        hovermode='x unified',
+                        font=dict(color='#2c3e50', size=12),
+                        margin=dict(t=50, b=40, l=60, r=40)
                     )
                 },
                 config={'displayModeBar': False}  # Hide toolbar
             )
-        ], className="card", style={'padding': '20px'})
+        ], className="card", style={'padding': '20px ', 'backgroundColor': '#f9f9f9', 'borderRadius': '10px'})
     ]),
 # Key Metrics Section
             html.Div([
-                html.H1("Key Metrics", style={'textAlign': 'center', 'marginBottom': '20px'}),
 
                 html.Div([
-                    html.H3("Total Energy Demand", className="card-title", style={
-                        'textAlign': 'center',
-                        'color': 'black',
-                        'marginBottom': '10px',
-                        'fontWeight': 'bold'
-                    }),
-                    html.P(f"{total_energy_demand:.2f} kWh", style={
-                        'fontSize': '24px',
-                        'color': 'black',
-                        'textAlign': 'center',
-                        'marginBottom': '15px'
-                    }),
+                    html.H3("Energy comparison", className="card-title"),
+                    html.P(
+                        f"Total energy demand: {total_energy_demand :.2f} kWh/ Total adjusted energy demand:{total_adjusted_energy_demand :.2f}kWh",
+                        style={'fontSize': '20px'}),
                     dcc.Graph(
-                        figure=px.line(
-                            data1,
-                            x='Date',
-                            y='Energy Demand (kWh)',
-                            title="Energy Demand Over Time",
-                            line_shape='linear'  # Ensure line shape is smooth
-                        ).update_traces(
-                            line=dict(color='#4ecdc4', width=2)  # Set line color and width
-                        ).update_layout(
-                            showlegend=False,
-                            title=dict(text="Energy Demand Over Time", font=dict(size=16, color='#2c3e50')),
-                            xaxis=dict(
-                                title="Date",
-                                title_font=dict(size=14, color='#2c3e50'),
-                                tickfont=dict(size=12, color='#2c3e50')
-                            ),
-                            yaxis=dict(
-                                title="Energy Demand (kWh)",
-                                title_font=dict(size=14, color='#2c3e50'),
-                                tickfont=dict(size=12, color='#2c3e50')
-                            ),
-                            plot_bgcolor='rgba(240,240,240,0.95)',  # Light gray chart background
-                            margin=dict(t=30, b=20, l=20, r=20),
-                            font=dict(color='#2c3e50')
-                        ),
-                        config={'displayModeBar': False}  # Disable extra controls
+                        figure=px.bar(
+                            y=[total_energy_demand, total_adjusted_energy_demand],
+                            x=["Energy demand in kWh", " Adjusted Energy demand in kWh"],
+                            color=["Without Concept", "With Concept"],
+                            color_discrete_map={"Without Concept": "#4ecdc4", "With Concept": "#ff6b6b"}
+                        ).update_layout(margin=dict(t=10), font=dict(color='#2c3e50')),
+                        config={'displayModeBar': False}
                     )
-                ], className="card", style={
-                    'padding': '20px',
-                    'backgroundColor': '#ffffff',
-                    'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.1)',
-                    'borderRadius': '10px',
-                    'marginBottom': '20px'
-                }),
-
-        # Card 2: Total Cost Comparison
-            html.Div([
-                html.H3("Cost Savings", className="card-title"),
-                html.P(f"${accurate_cost_savings:.2f}", style={'fontSize': '24px', 'color': 'green'}),
-                dcc.Graph(
-                    figure=px.bar(
-                        x=["Without Concept", "With Concept"],
-                        y=[cost_total_energy_demand, cost_with],
-                        color=["Without Concept", "With Concept"],
-                        color_discrete_map={"Without Concept": "#ff6b6b", "With Concept": "#4ecdc4"}
-                    ).update_layout(margin=dict(t=10), font=dict(color='#2c3e50')),
-                    config={'displayModeBar': False}
-                )
-            ], className="card"),
-        ], className="grid-row"),
-
-        # Row 2: Solar & Motor Energy
-        html.Div([
+                ], className="card"),
+                html.Div([
             # Card 3: Solar Contribution
             html.Div([
                 html.H3("Solar Contribution", className="card-title"),
-                html.P(f"{solar_energy_covered:.2f} kWh (${cost_solar_energy_covered:.2f})", style={'fontSize': '20px'}),
+                html.P(f"{solar_energy_covered:.2f} kWh (€{cost_solar_energy_covered:.2f})", style={'fontSize': '20px'}),
                 dcc.Graph(
                     figure=px.pie(
                         values=[solar_energy_covered, total_combined_energy - solar_energy_covered],
                         names=["Solar", "Remaining"],
-                        hole=0.6,
+                        hole=0.4,
                         color_discrete_sequence=['#4ecdc4', '#ff6b6b']
                     ).update_layout(showlegend=False, margin=dict(t=10), font=dict(color='#2c3e50')),
                     config={'displayModeBar': False}
                 )
             ], className="card"),
 
+
+
             # Card 4: Motor Energy Cost
             html.Div([
-                html.H3("Motor Energy Cost", className="card-title"),
-                html.P(f"${motor_energy_cost:.2f}", style={'fontSize': '24px'}),
+                html.H3("Motor Energy Cost year ", className="card-title"),
+                html.P(f"{total_motor_energy} kWh/year x 0.20€ = €{motor_energy_cost:.2f}/year", style={'fontSize': '24px'}),
                 dcc.Graph(
                     figure=px.bar(
                         x=["Motor Energy"],
                         y=[total_motor_energy],
                         title="",
-                        color_discrete_sequence=['#4ecdc4 ']
-                    ).update_layout(margin=dict(t=10), font=dict(color='#ff6b6b ')),
+                        color_discrete_sequence=['#ff6b6b ']
+                    ).update_layout(margin=dict(t=10), font=dict(color='black')),
                     config={'displayModeBar': False}
                 )
             ], className="card"),
@@ -281,49 +233,18 @@ app.layout = html.Div([
             html.H2("Energy Demand Breakdown", style={'textAlign': 'center', 'marginBottom': '20px'}),
             html.Div([
                 dcc.Graph(
-                    figure=pie_chart_figure.update_layout(
-                        showlegend=False,
-                        margin=dict(t=30, b=20, l=20, r=20),
-                        hovermode='closest',
-                        font=dict(color='#2c3e50')
-                    ),
+                    figure=px.pie(
+                        values=[total_energy_demand, total_motor_energy ],
+                        names=["Total Energy Demand", "Total Motor Energy"],
+                        hole=0.4,
+                        color_discrete_sequence=['#4ecdc4', '#ff6b6b']
+                    ).update_layout(showlegend=False, margin=dict(t=10), font=dict(color='#2c3e50')),
                     config={'displayModeBar': False}
                 )
             ], className="card", style={'padding': '15px'})
         ]),
 
-        # Updated Energy Contribution
-        html.Div([
-            html.H2("Updated Energy Contribution: Solar vs. Remaining Demand", style={'textAlign': 'center'}),
-            html.Div([
-                dcc.Graph(
-                    figure=fig_pie_updated,  # Use the updated fig_pie_updated
-                    config={'displayModeBar': False}  # Disable display mode bar
-                )
-            ], className="card", style={'padding': '15px', 'backgroundColor': '#f9f9f9'})
-        ]),
 
-        # Stacked Bar Chart
-        html.Div([
-            html.H2("Energy Consumption by State", style={'textAlign': 'center', 'marginBottom': '20px'}),
-            html.Div([
-                dcc.RadioItems(
-                    id='aggregation-level',
-                    options=[
-                        {'label': 'Weekly', 'value': 'Weekly'},
-                        {'label': 'Monthly', 'value': 'Monthly'}
-                    ],
-                    value='Weekly',  # Default selection
-                    inline=True,
-                    inputStyle={'margin-right': '10px', 'accent-color': '#4ecdc4'},
-                    labelStyle={'color': '#2c3e50', 'font-weight': '500', 'margin-right': '15px'}
-                ),
-                dcc.Graph(
-                    id='stacked-bar-chart',
-                    config={'displayModeBar': False}  # Disable unnecessary display options
-                )
-            ], className="card", style={'padding': '20px', 'backgroundColor': '#f9f9f9'})
-        ]),
         #waterfall
         html.Div([
             html.H2("Cost Savings Breakdown", style={
@@ -341,8 +262,8 @@ app.layout = html.Div([
                             measure=["absolute", "relative", "relative", "total"],
                             x=["Initial Cost", "Adaptation Savings", "Solar Savings", "Final Cost"],
                             textposition="outside",
-                            text=[f"${cost_total_energy_plus_motor:.2f}", f"-${cost_difference_energy:.2f}",
-                                  f"-${cost_solar_energy_covered:.2f}", f"${cost_with:.2f}"],
+                            text=[f"€{cost_total_energy_plus_motor:.2f}", f"-€{cost_difference_energy:.2f}",
+                                  f"-€{cost_solar_energy_covered:.2f}", f"€{cost_with:.2f}"],
                             y=[cost_total_energy_plus_motor, -cost_difference_energy, -cost_solar_energy_covered,
                                cost_with],
                             connector={"line": {"color": "rgb(63, 63, 63)"}},
@@ -351,10 +272,10 @@ app.layout = html.Div([
                             totals={"marker": {"color": "#4ecdc4"}}  # Green for totals
                         )
                     ).update_layout(
-                        title="Cost Savings Breakdown (Waterfall Chart)",
+                        title="Cost Savings Breakdown ",
                         title_font=dict(size=16, color='#2c3e50'),
                         yaxis=dict(
-                            title="Cost ($)",
+                            title="Cost (€)",
                             title_font=dict(size=14, color='#2c3e50'),
                             tickfont=dict(size=12, color='#2c3e50')
                         ),
@@ -377,17 +298,25 @@ app.layout = html.Div([
             })
         ]),
 
+# Card 2: Total Cost Comparison
+            html.Div([
+                html.H3("Cost Savings", className="card-title"),
+                html.P(f"€{accurate_cost_savings:.2f}", style={'fontSize': '24px', 'color': 'green'}),
+                dcc.Graph(
+                    figure=px.bar(
+                        x=["Without Concept", "With Concept"],
+                        y=[cost_total_energy_demand, cost_with],
+                        color=["Without Concept", "With Concept"],
+                        color_discrete_map={"Without Concept": "#4ecdc4", "With Concept": "#ff6b6b"}
+                    ).update_layout(margin=dict(t=10), font=dict(color='#2c3e50')),
+                    config={'displayModeBar': False}
+                )
+            ], className="card"),
+        ], className="grid-row"),
+
     ], style={'textAlign': 'center'})
 
 
-# Callbacks
-
-@app.callback(
-    Output('stacked-bar-chart', 'figure'),
-    Input('aggregation-level', 'value')  # Add Input
-)
-def update_stacked_bar(aggregation_level):
-    return stacked_bar_chart(aggregation_level, weekly_data, monthly_data)
 
 
 if __name__ == "__main__":

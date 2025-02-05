@@ -1,30 +1,34 @@
-import pandas as pd
-# Reload the uploaded CSV file
-file_path = r'C:\Users\HP\OneDrive\Documentos\martin\martin\Uni\3 semester\Schmidt\finalpitch\incident_radiation_21_06.csv'
-data = pd.read_csv(file_path)
+import plotly.express as px
 
-# Ensure proper formatting for the 'Time' column
-data['Time'] = pd.to_datetime(data['Time'], errors='coerce')
+# Data for the plot
+area_data = {
+    "State": ["Contracted Area (65 m²)", "Expanded Area (135 m²)"],
+    "Area (m²)": [65, 135]
+}
 
-# Get the starting time and total indices
-start_time = data['Time'].min()
-max_index = data['Point Index'].max()
+# Create a donut chart
+fig = px.pie(
+    area_data,
+    values="Area (m²)",
+    names="State",
+    title="Contracted vs Expanded Building Area",
+    hole=0.5,  # Creates a donut chart
+    color_discrete_sequence=["#4ecdc4", "#ff6b6b"]  # Custom colors
+)
 
-# Calculate the time increment for 1.1 minutes per index
-time_increment = pd.Timedelta(minutes=1.1)
+# Update layout for styling
+fig.update_layout(
+    title_font=dict(size=16, color='#2c3e50'),
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=-0.2,
+        xanchor="center",
+        x=0.5
+    ),
+    margin=dict(t=30, b=20, l=20, r=20),
+    font=dict(color='#2c3e50')
+)
 
-# Generate a complete sequence of indices and times
-full_index = pd.DataFrame({'Point Index': range(1, max_index + 1)})
-full_index['Time'] = [start_time + i * time_increment for i in range(len(full_index))]
-
-# Merge the full index with the original data
-fixed_data = pd.merge(full_index, data, on=['Point Index', 'Time'], how='left')
-
-# Interpolate missing 'Radiation (kWh/m²)' values
-fixed_data['Radiation (kWh/m²)'] = fixed_data['Radiation (kWh/m²)'].interpolate(method='linear')
-
-# Save the fixed dataset to a new CSV file
-output_path = "incident_radiation_21_06_fixed.csv"  # Replace with desired output file path
-fixed_data.to_csv(output_path, index=False)
-
-print(f"Fixed file saved to: {output_path}")
+# Show the chart
+fig.show()
